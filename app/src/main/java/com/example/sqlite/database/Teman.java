@@ -5,7 +5,6 @@ public class Teman {
     String nama;
     String telpon;
 
-
     public Teman() {
     }
 
@@ -18,23 +17,18 @@ public class Teman {
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
-
     public String getNama() {
         return nama;
     }
-
     public void setNama(String nama) {
         this.nama = nama;
     }
-
     public String getTelpon() {
         return telpon;
     }
-
     public void setTelpon(String telpon) {
         this.telpon = telpon;
     }

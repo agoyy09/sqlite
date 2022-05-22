@@ -1,89 +1,149 @@
 package com.example.sqlite.adapter;
 
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.example.sqlite.R;
 import com.example.sqlite.MainActivity;
-import com.example.sqlite.edit_teman;
-import com.example.sqlite.database.DBController;
+import com.example.sqlite.EditTeman;
+import com.example.sqlite.app.AppController;
 import com.example.sqlite.database.Teman;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 
 public class TemanAdapter extends RecyclerView.Adapter<TemanAdapter.TemanViewHolder> {
     private ArrayList<Teman> listData;
-    private Context control;
-
     public TemanAdapter(ArrayList<Teman> listData) {
         this.listData = listData;
     }
 
-
     @Override
-    public TemanAdapter.TemanViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public TemanAdapter.TemanViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater layoutinf = LayoutInflater.from(parent.getContext());
-        View view = layoutinf.inflate(R.layout.row_data_teman, parent, false);
-        control = parent.getContext();
+        View view = layoutinf.inflate(R.layout.row_data_teman,parent,false);
         return new TemanViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull TemanAdapter.TemanViewHolder holder, int position) {
-        String nm, tlp, id;
-
+    public void onBindViewHolder(TemanAdapter.TemanViewHolder holder, int position) {
+        String id,nm,telp;
         id = listData.get(position).getId();
         nm = listData.get(position).getNama();
-        tlp = listData.get(position).getTelpon();
-        DBController db = new DBController(control);
+        telp = listData.get(position).getTelpon();
 
-        holder.namaTxt.setTextSize(20);
+        holder.namaTxt.setTextColor(Color.BLUE);
+        holder.namaTxt.setTextSize(30);
         holder.namaTxt.setText(nm);
-        holder.telponTxt.setText(tlp);
+        holder.telponTxt.setText(telp);
 
-        holder.cardku.setOnLongClickListener(new View.OnLongClickListener(){
+        holder.cardku.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onLongClick(View view){
-                PopupMenu popupMenu = new PopupMenu(control, holder.cardku);
-                popupMenu.inflate(R.menu.menu);
-                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onLongClick(View v) {
+                PopupMenu pm = new PopupMenu(v.getContext(), v);
+                pm.inflate(R.menu.menu);
+
+                pm.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()){
-                            case R.id.mnEdit:
-                                Intent i = new Intent(control, edit_teman.class);
-                                i.putExtra("id",id);
-                                i.putExtra("nama",nm);
-                                i.putExtra("telepon",tlp);
-                                control.startActivity(i);
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        switch (menuItem.getItemId()){
+                            case R.id.edit:
+                                Bundle bendle = new Bundle();
+                                bendle.putString("kunci1",id);
+                                bendle.putString("kunci2",nm);
+                                bendle.putString("kunci3",telp);
+
+                                Intent intent = new Intent(v.getContext(), EditTeman.class);
+                                v.getContext().startActivity(intent);
                                 break;
-                            case R.id.mnHapus:
-                                HashMap<String,String> values = new HashMap<>();
-                                values.put("id",id);
-                                db.DeleteData(values);
-                                Intent j = new Intent(control, MainActivity.class);
-                                control.startActivity(j);
+
+                            case R.id.hapus:
+                                AlertDialog.Builder alertdb = new AlertDialog.Builder(v.getContext());
+                                alertdb.setTitle("Yakin " +nm+ " akan dihapus?");
+                                alertdb.setMessage("Tekan Ya untuk menghapus");
+                                alertdb.setCancelable(false);
+                                alertdb.setPositiveButton("Ya", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        HapusData(id);
+                                        Toast.makeText(v.getContext(), "Data "+id+" telah dihapus", Toast.LENGTH_LONG).show();
+                                        Intent intent = new Intent(v.getContext(), MainActivity.class);
+                                        v.getContext().startActivity(intent);
+                                    }
+                                });
+                                alertdb.setNegativeButton("Tidak", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.cancel();
+                                    }
+                                });
+                                AlertDialog adlg= alertdb.create();
+                                adlg.show();
                                 break;
                         }
                         return true;
                     }
                 });
-                popupMenu.show();
-                return false;
+                pm.show();
+                return  true;
             }
         });
+    }
+
+    private void HapusData(final String idx) {
+        String url_update = "http://10.0.2.2/TIumy/deletetm.php";
+        final String TAG = MainActivity.class.getSimpleName();
+        final String TAG_SUCCES = "success";
+        final int[] sukses = new int[1];
+
+        StringRequest stringReq = new StringRequest(Request.Method.POST, url_update, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d(TAG, "Respon: " + response.toString());
+                try {
+                    JSONObject jObj = new JSONObject();
+                    sukses[0] = jObj.getInt(TAG_SUCCES);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG,"Error :"+error.getMessage());
+            }
+        })
+        {
+            protected Map<String,String> getparams(){
+                Map<String,String> params = new HashMap<>();
+                params.put("id",idx);
+                return params;
+            }
+        };
+        AppController.getInstance().addToRequestQueue(stringReq);
     }
 
     @Override
@@ -93,11 +153,9 @@ public class TemanAdapter extends RecyclerView.Adapter<TemanAdapter.TemanViewHol
 
     public class TemanViewHolder extends RecyclerView.ViewHolder {
         private CardView cardku;
-        private TextView namaTxt, telponTxt;
-
+        private TextView namaTxt,telponTxt;
         public TemanViewHolder(View view) {
             super(view);
-
             cardku = (CardView) view.findViewById(R.id.kartuku);
             namaTxt = (TextView) view.findViewById(R.id.textNama);
             telponTxt = (TextView) view.findViewById(R.id.textTelpon);

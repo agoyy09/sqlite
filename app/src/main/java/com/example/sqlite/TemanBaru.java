@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class TemanBaru extends AppCompatActivity {
     private TextInputEditText tNama, tTelpon;
     private Button simpanBtn;
-    String nm,tlp;
+    String nm, tlp;
     DBController controller = new DBController(this);
 
     @Override
@@ -31,26 +31,24 @@ public class TemanBaru extends AppCompatActivity {
         simpanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(tNama.getText().equals("")||tTelpon.getText().toString().equals("")){
-                    Toast.makeText(getApplicationContext(),"Data belum komplit!", Toast.LENGTH_SHORT).show();
-                }else {
+                if (tNama.getText().toString().equals("")||tTelpon.getText().toString().equals("")){
+                    Toast.makeText(getApplicationContext(), "Data belum komplit", Toast.LENGTH_SHORT).show();
+                } else {
                     nm = tNama.getText().toString();
                     tlp = tTelpon.getText().toString();
 
                     HashMap<String ,String> qvalues = new HashMap<>();
                     qvalues.put("nama",nm);
-                    qvalues.put("telpon",tlp);
+                    qvalues.put("telpon", tlp);
 
                     controller.insertData(qvalues);
                     callHome();
-
                 }
             }
         });
     }
-
     public void callHome(){
-        Intent intent = new Intent(TemanBaru.this,MainActivity.class);
+        Intent intent = new Intent(TemanBaru.this, MainActivity.class);
         startActivity(intent);
         finish();
     }
